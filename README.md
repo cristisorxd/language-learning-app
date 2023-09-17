@@ -11,11 +11,11 @@ A modern and interactive React Native language learning app designed to help use
 - Firebase (Firestore)
 
 ### Features
-Exercise Display: Display exercises with missing words to guess in both English and German.
-Multiple-Choice Options: Provide multiple-choice options for users to select.
-Answer Validation: Check user answers and display correctness.
-Word Translations: Show translations of German words in English when tapped.
-Exercise Reset: Reset exercises to fetch new ones.
+- Exercise Display: Display exercises with missing words to guess in both English and German.
+- Multiple-Choice Options: Provide multiple-choice options for users to select.
+- Answer Validation: Check user answers and display correctness.
+- Word Translations: Show translations of German words in English when tapped.
+- Exercise Reset: Reset exercises to fetch new ones.
 
 ### Prerequisites
 
