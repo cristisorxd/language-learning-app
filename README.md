@@ -24,7 +24,7 @@ This is a React Native language learning app that helps users practice and impro
 - Multiple-Choice Options: Provide multiple-choice options for users to select.
 - Answer Validation: Check user answers and display correctness.
 - Word Translations: Show translations of German words in English when tapped.
-- Exercise Reset: Reset exercises to fetch new ones.
+- Exercise Reset: Reset exercises when there are none left.
 
 ### Prerequisites
 
@@ -62,7 +62,7 @@ This is a React Native language learning app that helps users practice and impro
 ### `exercises` Collection
 
 - **Collection:** `exercises`
-  - **Document:** Each document represents an exercise with the following fields:
+  - **Document:** Each document represents an exercise (it should have a number as the id (0-9999) with the following fields:
     - `correctOptionIndex` (number): The index of the correct option within the `options` array.
     - `deWords` (array of strings): An array of German words used in the exercise.
     - `enWords` (array of strings): An array of English words used in the exercise.
