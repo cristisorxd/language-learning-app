@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity } from "react-native";
+import { StyleProp, Text, TouchableOpacity, ViewStyle } from "react-native";
 import React from "react";
 import tw from "twrnc";
 
@@ -8,6 +8,7 @@ interface IOption {
   isDisabled?: boolean;
   onPress: () => void;
   selected: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 const Option = ({
@@ -16,6 +17,7 @@ const Option = ({
   onPress,
   selected,
   isDisabled,
+  style
 }: IOption) => {
   const getBgColor = () => {
     if (isDisabled) {
@@ -48,7 +50,7 @@ const Option = ({
 
   return (
     <TouchableOpacity
-      style={tw`bg-[${getBgColor()}] p-4 shadow-lg rounded-2xl`}
+      style={[tw`bg-[${getBgColor()}] p-4 shadow-lg rounded-2xl`, style]}
       onPress={isDisabled ? undefined : onPress}
     >
       <Text
