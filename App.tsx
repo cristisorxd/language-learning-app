@@ -14,168 +14,205 @@ import Button from "./components/Button";
 import Tooltip from "./components/Tooltip";
 
 type Exercise = {
-  id: string;
-  correctOptionIndex: number;
-  deWords: string[];
-  enWords: string[];
-  options: { word: string; selected: boolean }[];
-  enTranslations: Translation[][];
+  englishSentence: string;
+  targetSentence: string;
+  wordChoices: string[];
+  correctWord: string;
+  wordToGuess: string;
 };
 
 type Translation = {
+  word: string;
   en: string;
   de: string;
 };
 
+interface CurrentExercise extends Exercise {
+  id: string;
+  translations: Record<string, string>;
+}
+
 export default function App() {
-  const [currentExercise, setCurrentExercise] = useState<Exercise | null>(null);
-  const [exerciseIndex, setExerciseIndex] = useState(0);
-  const [isOptionSelected, setIsOptionSelected] = useState(false);
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [currentExercise, setCurrentExercise] =
+    useState<CurrentExercise | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [tappedTranslation, setTappedTranslation] = useState<string | null>(
+    null
+  );
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [selectedWordChoice, setSelectedWordChoice] = useState<string | null>(
+    null
+  );
   const [showNextExercise, setShowNextExercise] = useState(false);
   const [isOptionCorrect, setIsOptionCorrect] = useState<null | boolean>(null);
   const [noMoreExercises, setNoMoreExercises] = useState(false);
-  const [loadingExercise, setLoadingExercise] = useState(false);
-  const [tooltipText, setTooltipText] = useState("");
-  const [tooltipVisible, setTooltipVisible] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    fetchExercise(exerciseIndex);
-  }, [exerciseIndex]);
-
-  const fetchExercise = async (index: number) => {
-    try {
-      setLoadingExercise(true);
-      const exerciseRef = doc(firestore, "exercises", index.toString());
-      const exerciseDoc = await getDoc(exerciseRef);
-
-      if (exerciseDoc.exists()) {
-        const exerciseData = exerciseDoc.data();
-
-        const translations = await Promise.all(
-          exerciseData.deWords.map(async (word: string) => {
-            if (!word) return "";
-            const q = query(translationsRef, where("de", "==", word));
-            const snapshot = await getDocs(q);
-            const translationData = snapshot.docs.map((doc) => doc.data());
-            return translationData;
-          })
+    const fetchExercise = async () => {
+      setIsLoading(true);
+      try {
+        const exerciseRef = doc(
+          firestore,
+          "exercises",
+          currentExerciseIndex.toString()
         );
+        const exerciseDoc = await getDoc(exerciseRef);
 
-        const initialOptions = exerciseData.options.map((option: string) => ({
-          word: option,
-          selected: false,
-        }));
+        if (exerciseDoc.exists()) {
+          const exerciseData: Exercise = exerciseDoc.data() as Exercise;
 
-        const exerciseWithTranslations: Exercise = {
-          id: exerciseDoc.id,
-          correctOptionIndex: exerciseData.correctOptionIndex,
-          deWords: exerciseData.deWords,
-          enWords: exerciseData.enWords,
-          options: initialOptions,
-          enTranslations: translations,
-        };
+          const targetSentenceWords = exerciseData.targetSentence
+            .toLowerCase()
+            .split(" ")
+            .filter((word: string) => word !== "_");
+          const translationsQuery = query(
+            translationsRef,
+            where("word", "in", targetSentenceWords)
+          );
 
-        setCurrentExercise(exerciseWithTranslations);
-        setIsOptionSelected(false);
-        setIsOptionCorrect(null);
-        setShowNextExercise(false);
-        setTooltipVisible(false);
-      } else {
-        console.log("Exercise not found.");
-        setNoMoreExercises(true);
+          const translationsSnapshot = await getDocs(translationsQuery);
+          const translationsData: Record<string, string> = {};
+
+          translationsSnapshot.forEach((doc) => {
+            const translationData = doc.data() as Translation;
+            translationsData[translationData.word] = translationData.en;
+          });
+
+          setCurrentExercise({
+            ...exerciseData,
+            id: exerciseDoc.id,
+            translations: translationsData,
+          });
+          setSelectedWordChoice(null);
+          setIsOptionCorrect(null);
+          setShowNextExercise(false);
+          setTappedTranslation(null);
+        } else {
+          console.log("Exercise not found.");
+          setNoMoreExercises(true);
+        }
+      } catch (error) {
+        console.error("Error fetching exercise: ", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching exercise:", error);
-    } finally {
-      setLoadingExercise(false);
-    }
-  };
-  const handleOptionClick = (optionIndex: number) => {
-    if (!currentExercise) return;
-
-    const updatedOptions = [...currentExercise.options];
-    const selectedOption = updatedOptions[optionIndex];
-    const updatedDeWords = [...currentExercise.deWords];
-
-    const currentSelectedOptionIndex = updatedOptions.findIndex(
-      (option) => option.selected
-    );
-
-    if (selectedOption.selected) {
-      const deselectedWordIndex = updatedDeWords.indexOf(selectedOption.word);
-      updatedDeWords[deselectedWordIndex] = "";
-      selectedOption.selected = false;
-    } else if (currentSelectedOptionIndex === -1) {
-      const emptyWordIndex = updatedDeWords.indexOf("");
-      updatedDeWords[emptyWordIndex] = selectedOption.word;
-      selectedOption.selected = true;
-    } else {
-      const currentSelectedOption = updatedOptions[currentSelectedOptionIndex];
-      const deselectedWordIndex = updatedDeWords.indexOf(
-        currentSelectedOption.word
-      );
-      updatedDeWords[deselectedWordIndex] = selectedOption.word;
-      selectedOption.selected = true;
-      currentSelectedOption.selected = false;
-    }
-
-    const updatedExercise = {
-      ...currentExercise,
-      deWords: updatedDeWords,
-      options: updatedOptions,
     };
 
-    setCurrentExercise(updatedExercise);
-    setIsOptionSelected(true);
-  };
+    fetchExercise();
+  }, [currentExerciseIndex]);
 
-  const handleGermanWordClick = (index: number, event: any) => {
-    if (currentExercise && currentExercise.deWords[index] !== "") {
-      const translations = currentExercise.enTranslations[index];
-      const translationText = translations
-        .map((translation) => translation.en)
-        .join(", ");
-      setTooltipText(translationText);
-      setTooltipPosition({
-        x: event.nativeEvent.pageX,
-        y: event.nativeEvent.pageY,
-      });
-      setTooltipVisible(true);
-    }
-  };
+  const formatEnglishSentence = (
+    englishSentence: string,
+    wordToGuess: string
+  ) => {
+    const words = englishSentence.split(" ");
 
-  const canCheckAnswer = currentExercise?.deWords.includes("") ? false : true;
-
-  const onCheckAnswerPress = () => {
-    if (!canCheckAnswer || !currentExercise) return;
-
-    setShowNextExercise(true);
-    const selectedOption = currentExercise.options.find(
-      (option) => option.selected
+    const formattedSentence = words.map((word, index) =>
+      word === wordToGuess ? (
+        <Text
+          key={index}
+          style={[
+            tw`font-bold`,
+            {
+              textDecorationLine: "underline",
+            },
+          ]}
+        >
+          {word}{" "}
+        </Text>
+      ) : (
+        <Text key={index}>{word} </Text>
+      )
     );
 
-    if (selectedOption) {
-      const selectedOptionIndex =
-        currentExercise.options.indexOf(selectedOption);
-      const isCorrect =
-        selectedOptionIndex === currentExercise.correctOptionIndex;
+    return formattedSentence;
+  };
 
-      setIsOptionCorrect(isCorrect);
+  const formatGermanSentence = (
+    targetSentence: string,
+    correctWord: string
+  ) => {
+    const words = targetSentence.split(" ");
+
+    const formattedSentence = words.map((word, index) => {
+      if (word === "_") {
+        return selectedWordChoice ? (
+          <Option
+            word={selectedWordChoice}
+            selected={false}
+            onPress={() => !showNextExercise && setSelectedWordChoice(null)}
+            style={tw`mx-2`}
+            key={index}
+          />
+        ) : (
+          <Text key={index} style={tw`text-white text-3xl mt-5`}>
+            {"_".repeat(correctWord.length)}{" "}
+          </Text>
+        );
+      } else {
+        return (
+          <Text
+            key={index}
+            onPress={(event) => handleTappedWord(word, event)}
+            style={[
+              tw`text-white text-3xl mt-5`,
+              {
+                textDecorationStyle: "dotted",
+                textDecorationLine: "underline",
+              },
+            ]}
+          >
+            {word}{" "}
+          </Text>
+        );
+      }
+    });
+
+    return formattedSentence;
+  };
+
+  const onCheckAnswerPress = () => {
+    if (!selectedWordChoice || !currentExercise) return;
+    setShowNextExercise(true);
+
+    if (selectedWordChoice) {
+      const isSelectedWordCorrect =
+        selectedWordChoice === currentExercise.correctWord;
+      setIsOptionCorrect(isSelectedWordCorrect);
     }
   };
 
   const onContinuePress = () => {
-    if (!canCheckAnswer) return;
-    setExerciseIndex(exerciseIndex + 1);
+    if (!selectedWordChoice) return;
+    setCurrentExerciseIndex(currentExerciseIndex + 1);
   };
 
   const onResetPress = () => {
-    setExerciseIndex(0);
+    setCurrentExerciseIndex(0);
     setNoMoreExercises(false);
   };
 
-  if (loadingExercise) {
+  const handleTappedWord = (word: string, event: any) => {
+    const translation =
+      currentExercise?.translations[word.toLowerCase()] || null;
+    setTappedTranslation(translation);
+    setTooltipPosition({
+      x: event.nativeEvent.pageX,
+      y: event.nativeEvent.pageY,
+    });
+  };
+
+  const clearTappedWord = () => {
+    setTappedTranslation(null);
+  };
+
+  const handleWordSelection = (selected: string) => {
+    setSelectedWordChoice(selected);
+    clearTappedWord();
+  };
+
+  if (isLoading) {
     return (
       <SafeAreaView style={tw`flex-1 bg-[#3b6c81] justify-center items-center`}>
         <ActivityIndicator />
@@ -195,7 +232,7 @@ export default function App() {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={() => setTooltipVisible(false)}>
+    <TouchableWithoutFeedback onPress={clearTappedWord}>
       <SafeAreaView
         style={tw`flex-1 bg-[#3b6c81] justify-around items-center w-full`}
       >
@@ -204,42 +241,29 @@ export default function App() {
           {currentExercise ? (
             <>
               <Text style={tw`text-white text-3xl mt-5`}>
-                {currentExercise.enWords.join(" ")}
+                {formatEnglishSentence(
+                  currentExercise.englishSentence,
+                  currentExercise.wordToGuess
+                )}
               </Text>
-              <Text style={tw`text-white text-3xl mt-10`}>
-                {currentExercise.deWords.map((word: string, index: number) => {
-                  if (word === "") {
-                    return <Text key={index}> ___ </Text>;
-                  }
-                  return (
-                    <Text
-                      key={index}
-                      style={[
-                        tw`text-white text-3xl mx-1`,
-                        {
-                          textDecorationStyle: "dotted",
-                          textDecorationLine: "underline",
-                        },
-                      ]}
-                      onPress={(event) => handleGermanWordClick(index, event)}
-                    >
-                      {word}{" "}
-                    </Text>
-                  );
-                })}
-              </Text>
-              {tooltipVisible && (
-                <Tooltip text={tooltipText} position={tooltipPosition} />
+              <View style={tw`flex-row`}>
+                {formatGermanSentence(
+                  currentExercise.targetSentence,
+                  currentExercise.correctWord
+                )}
+              </View>
+              {tappedTranslation && (
+                <Tooltip text={tappedTranslation} position={tooltipPosition} />
               )}
               <View
                 style={tw`gap-2 flex-row flex-wrap mt-15 justify-center w-1/2`}
               >
-                {currentExercise.options.map((option, index: number) => (
+                {currentExercise.wordChoices.map((option, index: number) => (
                   <Option
-                    key={option.word}
-                    word={option.word}
-                    selected={option.selected}
-                    onPress={() => handleOptionClick(index)}
+                    key={option}
+                    word={option}
+                    selected={option === selectedWordChoice}
+                    onPress={() => handleWordSelection(option)}
                     isDisabled={showNextExercise}
                   />
                 ))}
@@ -250,14 +274,17 @@ export default function App() {
           )}
         </View>
         <View style={tw`mb-10 w-full`}>
-          {isOptionSelected && !showNextExercise ? (
-            <Button onPress={onCheckAnswerPress} isDisabled={canCheckAnswer}>
+          {selectedWordChoice && !showNextExercise ? (
+            <Button
+              onPress={onCheckAnswerPress}
+              isDisabled={selectedWordChoice !== null}
+            >
               Check Answer
             </Button>
           ) : (
             <Button
               onPress={onContinuePress}
-              isDisabled={canCheckAnswer}
+              isDisabled={selectedWordChoice !== null}
               isCorrect={isOptionCorrect !== null ? isOptionCorrect : undefined}
             >
               Continue
