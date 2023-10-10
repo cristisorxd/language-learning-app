@@ -63,17 +63,19 @@ This is a React Native language learning app that helps users practice and impro
 
 - **Collection:** `exercises`
   - **Document:** Each document represents an exercise (it should have a number as the id (0-9999) with the following fields:
-    - `correctOptionIndex` (number): The index of the correct option within the `options` array.
-    - `deWords` (array of strings): An array of German words used in the exercise.
-    - `enWords` (array of strings): An array of English words used in the exercise.
-    - `options` (array of strings): An array of strings which represents the options for the answer.
+    - `correctWord` (string): The missing word in the german sentence.
+    - `targetSentence` (string): A German sentence that contains the character '_' as the missing one
+    - `englishSentence` (string): An English sentence.
+    - `wordChoices` (array of strings): An array of strings which represents the options for the answer.
+    - `wordToGuess` (string): A string that represents the word in English that corresponds to the missing german word..
   - **Example Document:**
     ```json
     {
-      "correctOptionIndex": 3,
-      "deWords": ["Das", "", "ist", "klein"],
-      "enWords": ["The", "house", "is", "small"],
-      "options": ["folgen", "Schaf", "Beriden", "Hause"]
+      "correctWord": "Hause",
+      "englishSentence": "The house is small",
+      "targetSentence": "Das _ ist klein",
+      "wordChoices": ["folgen", "Schaf", "Beriden", "Hause"],
+      "wordToGuess": "house",
     }
     ```
 
@@ -83,11 +85,13 @@ This is a React Native language learning app that helps users practice and impro
   - **Document:** Each document represents a translation pair with the following fields:
     - `de` (string): The German word or phrase.
     - `en` (string): The English translation of the German word or phrase.
+    - `word` (string): The target word referring to.
   - **Example Document:**
     ```json
     {
-      "de": "Haus",
-      "en": "House"
+      "de": "das",
+      "en": "the",
+      "word": "das"
     }
     ```
     
