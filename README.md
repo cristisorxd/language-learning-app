@@ -3,13 +3,12 @@
 This is a React Native language learning app that helps users practice and improve their language skills by filling in missing words in sentences. It fetches exercises from a Firestore database and provides a user-friendly interface for language practice.
 
 ## Screenshots
-![1](https://github.com/cristisorxd/language-learning-app/assets/86917574/c7cc8f46-2088-432e-9fd9-be91390ea707)
-![2](https://github.com/cristisorxd/language-learning-app/assets/86917574/9a93901d-1263-4e27-a0ef-d891c917d193)
-![3](https://github.com/cristisorxd/language-learning-app/assets/86917574/5a6b209e-8610-47fa-9b7b-f7b41ff2fe84)
-![4](https://github.com/cristisorxd/language-learning-app/assets/86917574/4ee5268c-42ed-4988-99eb-a58b3f67f30f)
-![5](https://github.com/cristisorxd/language-learning-app/assets/86917574/8f108680-910a-4cf5-afd1-bfff32b30819)
-![6](https://github.com/cristisorxd/language-learning-app/assets/86917574/e6ad805c-b3a2-4fac-9298-271008f9f7db)
-
+![WhatsApp Image 2023-10-10 at 09 10 15](https://github.com/cristisorxd/language-learning-app/assets/86917574/37f1b486-d996-481a-a800-5928d7bfabda)
+![WhatsApp Image 2023-10-10 at 09 10 16](https://github.com/cristisorxd/language-learning-app/assets/86917574/811034fa-d15f-43e9-899b-e915f746ada5)
+![WhatsApp Image 2023-10-10 at 09 10 16 (1)](https://github.com/cristisorxd/language-learning-app/assets/86917574/4df69f9b-cf1f-459c-a9f8-74cde14a656d)
+![WhatsApp Image 2023-10-10 at 09 10 17](https://github.com/cristisorxd/language-learning-app/assets/86917574/6cc6ffe6-542c-4f45-ae28-48beb0dc45f9)
+![WhatsApp Image 2023-10-10 at 09 10 18](https://github.com/cristisorxd/language-learning-app/assets/86917574/f9a59eb1-3374-478d-bc49-d51934f05113)
+![WhatsApp Image 2023-10-10 at 09 10 18 (1)](https://github.com/cristisorxd/language-learning-app/assets/86917574/018d3d19-b748-4a4c-8f78-68b387a18733)
 
 ## Tech Stack
 
